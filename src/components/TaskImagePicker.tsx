@@ -24,9 +24,9 @@ export default function TaskImagePicker({ title, onPick }: Props) {
       <button 
         type="button" 
         onClick={() => fileRef.current?.click()} 
-        className="backdrop-blur-sm bg-white/20 hover:bg-white/30 border border-white/30 text-white font-medium py-2 px-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-300/50"
+        className="bg-white/80 hover:bg-white/90 text-black font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-lg border-2 border-white/50 backdrop-blur-sm text-base"
       >
-        📷 Upload Icon
+        📷 UPLOAD ICON
       </button>
       <input
         ref={fileRef}

@@ -5,6 +5,8 @@ import Bubble from './components/Bubble';
 
 function App() {
   const tasks = useTasks(s => s.tasks);
+  
+  console.log('Current tasks:', tasks);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

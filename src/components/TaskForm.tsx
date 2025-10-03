@@ -10,10 +10,22 @@ export default function TaskForm() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    addTask(title.trim(), mins, pickedImage);
-    setTitle('');
-    setPickedImage(undefined);
+    console.log('Form submitted!', { title, mins, pickedImage });
+    
+    if (!title.trim()) {
+      alert('Please enter a task title');
+      return;
+    }
+    
+    try {
+      addTask(title.trim(), mins, pickedImage);
+      setTitle('');
+      setPickedImage(undefined);
+      console.log('Task added successfully!');
+    } catch (error) {
+      console.error('Error adding task:', error);
+      alert('Error adding task: ' + error);
+    }
   };
 
   return (
@@ -39,9 +51,9 @@ export default function TaskForm() {
       
       <button 
         type="submit" 
-        className="w-full backdrop-blur-sm bg-gradient-to-r from-blue-400/30 to-blue-600/30 hover:from-blue-400/40 hover:to-blue-600/40 border border-white/30 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-300/50"
+        className="w-full bg-white/80 hover:bg-white/90 text-black font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-xl border-2 border-white/50 backdrop-blur-sm text-xl"
       >
-        Add Task
+        ✅ ADD TASK
       </button>
     </form>
   );
