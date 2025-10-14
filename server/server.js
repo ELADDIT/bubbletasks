@@ -46,11 +46,14 @@ async function loadTasks() {
   }
 }
 
-// Save tasks to file (temporarily disabled to focus on functionality)
 async function saveTasks() {
   try {
-    // Temporarily disabled file saving to prevent infinite loop
-    console.log(`Tasks in memory: ${tasks.length} tasks (file saving disabled)`);
+    await fs.writeFile(
+      TASKS_FILE,
+      JSON.stringify(tasks, null, 2),
+      'utf8'
+    );
+    console.log(`Saved ${tasks.length} tasks to file`);
   } catch (error) {
     console.error('Error saving tasks:', error);
   }
