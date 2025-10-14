@@ -117,6 +117,13 @@ app.put('/api/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { title, estMinutes, status, imageDataUrl } = req.body;
+
+    const timerMetadataUpdates = Object.entries(req.body).reduce((acc, [key, value]) => {
+      if ((key === 'remainingSeconds' || key.startsWith('timer')) && value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     
     const taskIndex = tasks.findIndex(task => task.id === id);
     if (taskIndex === -1) {
@@ -138,9 +145,10 @@ app.put('/api/tasks/:id', async (req, res) => {
     const updatedTask = {
       ...tasks[taskIndex],
       ...(title && { title: title.trim() }),
-      ...(estMinutes && { estMinutes }),
+      ...(estMinutes !== undefined && { estMinutes }),
       ...(status && { status }),
       ...(imageDataUrl !== undefined && { imageDataUrl }),
+      ...timerMetadataUpdates,
       updatedAt: new Date().toISOString()
     };
 
