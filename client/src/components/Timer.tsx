@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, memo } from 'react';
-import Countdown from 'react-countdown';
+import { useCallback, useMemo, useRef, useState, memo } from 'react';
+import Countdown, { CountdownRenderProps } from 'react-countdown';
 
 interface TimerProps {
   totalMinutes: number;
@@ -38,6 +38,8 @@ const formatTime = (secondsRemaining: number) => {
   return `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
 };
 
+const DRIFT_THRESHOLD_MS = 1500;
+
 // Memoized timer component to prevent unnecessary re-renders
 const Timer = memo(function Timer({ totalMinutes, remainingSeconds, isActive = false, onTimeUp, onTick }: TimerProps) {
   const [isRunning, setIsRunning] = useState(isActive);
@@ -52,24 +54,32 @@ const Timer = memo(function Timer({ totalMinutes, remainingSeconds, isActive = f
     return Math.max(0, Math.floor(sourceSeconds));
   }, [overrideRemainingSeconds, remainingSeconds, totalMinutes]);
 
-  useEffect(() => {
-    setOverrideRemainingSeconds(undefined);
-  }, [remainingSeconds]);
+  const endTimeRef = useRef<number>(0);
 
-  // Calculate end time
-  const endTime = useMemo(() => {
-    return Date.now() + initialRemainingSeconds * 1000;
-  }, [initialRemainingSeconds, key]);
+  if (endTimeRef.current === 0) {
+    endTimeRef.current = Date.now() + initialRemainingSeconds * 1000;
+  }
+
+  if (isRunning && remainingSeconds != null) {
+    const now = Date.now();
+    const expectedMs = Math.max(0, Math.floor(remainingSeconds) * 1000);
+    const currentMs = endTimeRef.current - now;
+    const drift = expectedMs - currentMs;
+
+    if (Math.abs(drift) > DRIFT_THRESHOLD_MS) {
+      endTimeRef.current = now + expectedMs;
+    }
+  }
 
   // Custom renderer for the countdown
-  const renderer = useCallback(({ minutes, seconds, completed }: any) => {
-    const totalSeconds = minutes * 60 + seconds;
-    const progressPercent = ((totalDurationSeconds - totalSeconds) / totalDurationSeconds) * 100;
-    const { textClass, barClass } = getTimerStyles(totalSeconds);
+  const renderer = useCallback(({ completed }: CountdownRenderProps) => {
+    const actualRemainingSeconds = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000));
+    const progressPercent = ((totalDurationSeconds - actualRemainingSeconds) / totalDurationSeconds) * 100;
+    const { textClass, barClass } = getTimerStyles(actualRemainingSeconds);
 
     // Call onTick callback with throttling to avoid excessive updates
-    if (onTick && totalSeconds % 5 === 0) { // Only update every 5 seconds to reduce API calls
-      onTick(totalSeconds);
+    if (onTick && actualRemainingSeconds % 5 === 0) { // Only update every 5 seconds to reduce API calls
+      onTick(actualRemainingSeconds);
     }
 
     if (completed) {
@@ -81,7 +91,7 @@ const Timer = memo(function Timer({ totalMinutes, remainingSeconds, isActive = f
       <div className="flex items-center gap-2">
         {/* Timer Display */}
         <div className={`font-mono font-bold text-sm ${textClass}`}>
-          {formatTime(totalSeconds)}
+          {formatTime(actualRemainingSeconds)}
         </div>
 
         {/* Progress Bar */}
@@ -96,12 +106,28 @@ const Timer = memo(function Timer({ totalMinutes, remainingSeconds, isActive = f
   }, [onTick, onTimeUp, totalDurationSeconds]);
 
   const handleToggle = useCallback(() => {
-    setIsRunning(!isRunning);
-  }, [isRunning]);
+    const now = Date.now();
+
+    if (isRunning) {
+      const remainingMs = Math.max(0, endTimeRef.current - now);
+      const remainingRoundedSeconds = Math.ceil(remainingMs / 1000);
+      endTimeRef.current = now + remainingRoundedSeconds * 1000;
+      setOverrideRemainingSeconds(remainingRoundedSeconds);
+      setIsRunning(false);
+      return;
+    }
+
+    const baseSeconds = overrideRemainingSeconds ?? remainingSeconds ?? totalDurationSeconds;
+    const normalizedSeconds = Math.max(0, Math.round(baseSeconds));
+    endTimeRef.current = Date.now() + normalizedSeconds * 1000;
+    setOverrideRemainingSeconds(undefined);
+    setIsRunning(true);
+  }, [isRunning, overrideRemainingSeconds, remainingSeconds, totalDurationSeconds]);
 
   const handleReset = useCallback(() => {
     setIsRunning(false);
     setOverrideRemainingSeconds(totalDurationSeconds);
+    endTimeRef.current = Date.now() + totalDurationSeconds * 1000;
     setKey(prev => prev + 1); // Force remount with new end time
     onTick?.(totalDurationSeconds);
   }, [onTick, totalDurationSeconds]);
@@ -114,7 +140,7 @@ const Timer = memo(function Timer({ totalMinutes, remainingSeconds, isActive = f
       {isRunning ? (
         <Countdown
           key={key}
-          date={endTime}
+          date={endTimeRef.current}
           renderer={renderer}
           autoStart={true}
         />
