@@ -10,4 +10,6 @@ export interface Task {
   templateKey: string;
   remainingSeconds?: number;
   timerStartedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
