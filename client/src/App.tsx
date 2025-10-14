@@ -5,7 +5,7 @@ import { useTasks } from './store/useTasks';
 import Bubble from './components/Bubble';
 
 function App() {
-  const { tasks, isLoading, error, fetchTasks, clearError } = useTasks();
+  const { tasks, isLoading, isMutating, error, fetchTasks, clearError } = useTasks();
   
   // Fetch tasks on component mount
   useEffect(() => {
@@ -45,7 +45,17 @@ function App() {
               <p className="text-white/80 mt-2">Loading tasks...</p>
             </div>
           )}
-          
+
+          {/* Background mutation indicator */}
+          {isMutating && !isLoading && (
+            <div className="mt-6 text-center text-white/70">
+              <p className="inline-flex items-center gap-2">
+                <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                Syncing changes...
+              </p>
+            </div>
+          )}
+
           {/* Tasks display */}
           {!isLoading && tasks.length > 0 && (
             <div className="mt-6 space-y-3">

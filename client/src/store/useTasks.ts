@@ -5,6 +5,7 @@ import { TaskAPI } from '../services/api';
 interface TaskState {
   tasks: Task[];
   isLoading: boolean;
+  isMutating: boolean;
   error: string | null;
   
   // Actions
@@ -18,6 +19,7 @@ interface TaskState {
 export const useTasks = create<TaskState>((set, get) => ({
   tasks: [],
   isLoading: false,
+  isMutating: false,
   error: null,
 
   // Fetch all tasks from server
@@ -27,26 +29,26 @@ export const useTasks = create<TaskState>((set, get) => ({
       const tasks = await TaskAPI.getTasks();
       set({ tasks, isLoading: false });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to fetch tasks',
-        isLoading: false 
+        isLoading: false
       });
     }
   },
 
   // Add a new task
   addTask: async (title, estMinutes, imageDataUrl) => {
-    set({ isLoading: true, error: null });
+    set({ isMutating: true, error: null });
     try {
       const newTask = await TaskAPI.createTask(title, estMinutes, imageDataUrl);
-      set({ 
+      set({
         tasks: [...get().tasks, newTask],
-        isLoading: false 
+        isMutating: false
       });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to create task',
-        isLoading: false 
+        isMutating: false
       });
       throw error; // Re-throw so UI can handle it
     }
@@ -54,19 +56,19 @@ export const useTasks = create<TaskState>((set, get) => ({
 
   // Update an existing task
   updateTask: async (id, updates) => {
-    set({ isLoading: true, error: null });
+    set({ isMutating: true, error: null });
     try {
       const updatedTask = await TaskAPI.updateTask(id, updates);
-      set({ 
-        tasks: get().tasks.map(task => 
+      set({
+        tasks: get().tasks.map(task =>
           task.id === id ? updatedTask : task
         ),
-        isLoading: false 
+        isMutating: false
       });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to update task',
-        isLoading: false 
+        isMutating: false
       });
       throw error;
     }
@@ -74,17 +76,17 @@ export const useTasks = create<TaskState>((set, get) => ({
 
   // Delete a task
   deleteTask: async (id) => {
-    set({ isLoading: true, error: null });
+    set({ isMutating: true, error: null });
     try {
       await TaskAPI.deleteTask(id);
-      set({ 
+      set({
         tasks: get().tasks.filter(task => task.id !== id),
-        isLoading: false 
+        isMutating: false
       });
     } catch (error) {
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to delete task',
-        isLoading: false 
+        isMutating: false
       });
       throw error;
     }
