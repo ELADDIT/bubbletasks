@@ -91,15 +91,18 @@ app.post('/api/tasks', async (req, res) => {
     const hasActiveTask = tasks.some(task => task.status === 'Active');
     const status = hasActiveTask ? 'Queued' : 'Active';
 
+    const normalizedEstMinutes = estMinutes || 25;
+
     const newTask = {
       id: nanoid(),
       title: title.trim(),
-      estMinutes: estMinutes || 25,
+      estMinutes: normalizedEstMinutes,
       status: status,
       imageDataUrl: imageDataUrl || null,
       templateKey: title.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      remainingSeconds: normalizedEstMinutes * 60
     };
 
     tasks.push(newTask);
