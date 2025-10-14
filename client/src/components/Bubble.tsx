@@ -44,8 +44,9 @@ const Bubble = memo(function Bubble({ task }: { task: Task }) {
         <div className="flex items-center justify-between">
           <div className="text-white/80 text-sm">{task.status} • {task.estMinutes} minutes</div>
           {task.status === 'Active' && (
-            <Timer 
+            <Timer
               totalMinutes={task.estMinutes}
+              remainingSeconds={task.remainingSeconds ?? task.estMinutes * 60}
               isActive={true}
               onTimeUp={handleTimerComplete}
               onTick={handleTimerTick}
