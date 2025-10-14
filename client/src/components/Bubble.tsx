@@ -6,7 +6,7 @@ import { useTasks } from '../store/useTasks';
 
 // Memoize the component to prevent unnecessary re-renders
 const Bubble = memo(function Bubble({ task }: { task: Task }) {
-  const { updateTask } = useTasks();
+  const { updateTask, completeAndActivateNext } = useTasks();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -19,11 +19,11 @@ const Bubble = memo(function Bubble({ task }: { task: Task }) {
 
   const handleTimerComplete = useCallback(async () => {
     try {
-      await updateTask(task.id, { status: 'Done' });
+      await completeAndActivateNext(task.id);
     } catch (error) {
       console.error('Error updating task status:', error);
     }
-  }, [task.id, updateTask]);
+  }, [completeAndActivateNext, task.id]);
 
   const handleTimerTick = useCallback(async (remainingSeconds: number) => {
     // Update the task's remaining time in the store (throttled)

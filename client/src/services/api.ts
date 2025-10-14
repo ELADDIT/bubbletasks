@@ -1,3 +1,5 @@
+import type { Task, TaskStatus } from '../types';
+
 // API configuration
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -49,12 +51,12 @@ export class TaskAPI {
   }
 
   // Update a task
-  static async updateTask(id: string, updates: {
-    title?: string;
-    estMinutes?: number;
-    status?: string;
-    imageDataUrl?: string;
-  }) {
+  static async updateTask(
+    id: string,
+    updates: Partial<Pick<Task, 'title' | 'estMinutes' | 'status' | 'imageDataUrl' | 'remainingSeconds' | 'timerStartedAt'>> & {
+      status?: TaskStatus;
+    }
+  ) {
     try {
       const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: 'PUT',
