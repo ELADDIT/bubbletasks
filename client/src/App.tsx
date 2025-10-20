@@ -1,16 +1,44 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import TaskForm from './components/TaskForm';
 import { useTasks } from './store/useTasks';
 import Bubble from './components/Bubble';
 
 function App() {
-  const { tasks, isLoading, isMutating, error, fetchTasks, clearError } = useTasks();
-  
+  const {
+    tasks,
+    archivedTasks,
+    isLoading,
+    isLoadingArchive,
+    isMutating,
+    error,
+    fetchTasks,
+    fetchArchivedTasks,
+    clearError
+  } = useTasks();
+  const [showArchive, setShowArchive] = useState(false);
+
   // Fetch tasks on component mount
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  useEffect(() => {
+    if (showArchive && archivedTasks.length === 0 && !isLoadingArchive) {
+      fetchArchivedTasks();
+    }
+  }, [showArchive, archivedTasks.length, isLoadingArchive, fetchArchivedTasks]);
+
+  const handleToggleArchive = async () => {
+    if (!showArchive && archivedTasks.length === 0 && !isLoadingArchive) {
+      try {
+        await fetchArchivedTasks();
+      } catch (error) {
+        console.error('Failed to load archive:', error);
+      }
+    }
+    setShowArchive(prev => !prev);
+  };
 
   console.log('Current tasks:', tasks);
 
@@ -56,6 +84,15 @@ function App() {
             </div>
           )}
 
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleToggleArchive}
+              className="px-4 py-2 rounded-xl border border-white/30 bg-white/10 text-white/80 hover:bg-white/20 transition-colors duration-200"
+            >
+              {showArchive ? 'Hide Archive' : 'Show Archive'}
+            </button>
+          </div>
+
           {/* Tasks display */}
           {!isLoading && tasks.length > 0 && (
             <div className="mt-6 space-y-3">
@@ -67,6 +104,29 @@ function App() {
           {!isLoading && tasks.length === 0 && !error && (
             <div className="mt-6 text-center text-white/70">
               <p>No tasks yet. Create your first task above! 🎯</p>
+            </div>
+          )}
+
+          {showArchive && (
+            <div className="mt-8 backdrop-blur-sm bg-white/10 rounded-2xl border border-white/20 p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white/90">Archive</h2>
+                {isLoadingArchive && (
+                  <span className="text-sm text-white/60">Loading...</span>
+                )}
+              </div>
+
+              {!isLoadingArchive && archivedTasks.length === 0 && (
+                <p className="mt-3 text-sm text-white/60">No archived tasks yet.</p>
+              )}
+
+              {archivedTasks.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  {archivedTasks.map(task => (
+                    <Bubble key={task.id} task={task} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

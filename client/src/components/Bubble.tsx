@@ -10,10 +10,18 @@ const Bubble = memo(function Bubble({ task }: { task: Task }) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active': return 'from-green-400/30 to-green-600/30 border-green-300/40';
-      case 'Paused': return 'from-yellow-400/30 to-yellow-600/30 border-yellow-300/40';
-      case 'Done': return 'from-purple-400/30 to-purple-600/30 border-purple-300/40';
-      default: return 'from-blue-400/30 to-blue-600/30 border-blue-300/40';
+      case 'Active':
+        return 'from-green-400/30 to-green-600/30 border-green-300/40';
+      case 'Paused':
+        return 'from-yellow-400/30 to-yellow-600/30 border-yellow-300/40';
+      case 'Completed':
+        return 'from-purple-400/30 to-purple-600/30 border-purple-300/40';
+      case 'Cancelled':
+        return 'from-slate-400/30 to-slate-600/30 border-slate-400/40';
+      case 'Upcoming':
+        return 'from-blue-400/30 to-blue-600/30 border-blue-300/40';
+      default:
+        return 'from-slate-500/20 to-slate-700/30 border-slate-400/30';
     }
   };
 
