@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, memo } from 'react';
-import Countdown, { CountdownRenderProps } from 'react-countdown';
+import Countdown, { type CountdownRenderProps } from 'react-countdown';
 
 interface TimerProps {
   totalMinutes: number;

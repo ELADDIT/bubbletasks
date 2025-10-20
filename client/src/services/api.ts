@@ -5,12 +5,18 @@ const API_BASE_URL = 'http://localhost:3001/api';
 
 // API service for communicating with the backend
 export class TaskAPI {
-  // Get all tasks
-  static async getTasks() {
+  // Get tasks by scope (active by default)
+  static async getTasks(scope: 'active' | 'archived' | 'all' = 'active') {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks`);
+      const params = new URLSearchParams();
+      if (scope !== 'active') {
+        params.set('scope', scope);
+      }
+
+      const url = params.size > 0 ? `${API_BASE_URL}/tasks?${params.toString()}` : `${API_BASE_URL}/tasks`;
+      const response = await fetch(url);
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch tasks');
       }

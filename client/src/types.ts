@@ -1,5 +1,5 @@
 // Types for BubbleTasks application
-export type TaskStatus = 'Queued' | 'Active' | 'Paused' | 'Done';
+export type TaskStatus = 'Upcoming' | 'Active' | 'Paused' | 'Completed' | 'Cancelled';
 
 export interface Task {
   id: string;
@@ -12,4 +12,6 @@ export interface Task {
   timerStartedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  isArchived: boolean;
+  archivedAt?: string;
 }
