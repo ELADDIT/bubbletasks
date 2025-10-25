@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Database service (SQLite file-based)
+  database:
+    image: alpine:3.19
+    volumes:
+      - db-data:/data
+      - db-uploads:/uploads
+    command: >
+      sh -c "
+        apk add --no-cache sqlite &&
+        mkdir -p /data /uploads &&
+        chmod 755 /data /uploads &&
+        tail -f /dev/null
+      "
+    healthcheck:
+      test: ["CMD", "test", "-d", "/data"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Backend API service
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.3-tier
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
+      - CORS_ORIGINS=http://localhost:3030,http://127.0.0.1:3030,http://localhost,http://127.0.0.1
+      - PUBLIC_IMAGE_BASE_URL=http://localhost:3002
+      - DB_PATH=/app/data/tasks.sqlite
+    ports:
+      - "3002:3001"
+    volumes:
+      - db-data:/app/data
+      - db-uploads:/app/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/tasks?scope=active"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend service (nginx)
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.3-tier
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3002/api
+    ports:
+      - "3030:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:
+    driver: local
+  db-uploads:
+    driver: local
+
+networks:
+  default:
+    name: bubbletasks-network

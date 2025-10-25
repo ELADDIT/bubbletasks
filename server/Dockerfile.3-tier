@@ -1,0 +1,39 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install sqlite3 for database operations
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        sqlite3 \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install --omit=dev && npm cache clean --force
+
+# Copy server source code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p data uploads
+
+# Create a non-root user
+RUN groupadd --gid 1001 nodejs && \
+    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs
+
+# Set ownership of app directory
+RUN chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Set environment variables
+ENV NODE_ENV=production \
+    PORT=3001 \
+    HOST=0.0.0.0
+
+EXPOSE 3001
+
+CMD ["node", "server.js"]
