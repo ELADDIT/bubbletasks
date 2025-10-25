@@ -13,7 +13,30 @@ const __dirname = path.dirname(__filename);
 const execFileAsync = promisify(execFile);
 
 const app = express();
-const PORT = 3001;
+const portFromEnv = Number.parseInt(process.env.PORT ?? '', 10);
+const PORT = Number.isFinite(portFromEnv) ? portFromEnv : 3001;
+const HOST = process.env.HOST || '0.0.0.0';
+const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174'
+];
+const ALLOWED_ORIGINS = new Set(
+  (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
+DEFAULT_CORS_ORIGINS.forEach((origin) => ALLOWED_ORIGINS.add(origin));
+const corsOriginHandler = (origin, callback) => {
+  if (!origin || ALLOWED_ORIGINS.has(origin)) {
+    return callback(null, true);
+  }
+  return callback(new Error(`Origin ${origin} not allowed by CORS`));
+};
 const uploadsDir = path.join(__dirname, 'uploads');
 const dataDir = path.join(__dirname, 'data');
 const dbPath = path.join(dataDir, 'tasks.sqlite');
@@ -23,7 +46,7 @@ await fs.mkdir(uploadsDir, { recursive: true });
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+  origin: corsOriginHandler,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -441,7 +464,11 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
       });
     }
 
-    const imageUrl = `http://localhost:${PORT}/${req.file.filename}`;
+    const baseUrlFromEnv = process.env.PUBLIC_IMAGE_BASE_URL?.replace(/\/$/, '');
+    const requestHost = req.get('host');
+    const derivedBaseUrl = requestHost ? `${req.protocol}://${requestHost}` : `http://localhost:${PORT}`;
+    const publicBaseUrl = baseUrlFromEnv || derivedBaseUrl;
+    const imageUrl = `${publicBaseUrl}/${req.file.filename}`;
     
     res.json({
       success: true,
@@ -468,6 +495,14 @@ app.get('/api/health', (req, res) => {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
+  if (error?.message && error.message.includes('not allowed by CORS')) {
+    console.warn(`Blocked CORS request from origin: ${req.get('origin')}`);
+    return res.status(403).json({
+      success: false,
+      error: 'CORS origin not allowed'
+    });
+  }
+
   console.error('Unhandled error:', error);
   res.status(500).json({
     success: false,
@@ -489,8 +524,8 @@ async function startServer() {
     await databaseReady;
     console.log('✅ Database ready');
 
-    const server = app.listen(PORT, '127.0.0.1', () => {
-      console.log(`🚀 BubbleTasks API server running on http://localhost:${PORT}`);
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`🚀 BubbleTasks API server running on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
       console.log('📚 Available endpoints:');
       console.log('  GET    /api/health');
       console.log('  GET    /api/tasks');

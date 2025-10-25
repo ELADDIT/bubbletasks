@@ -45,6 +45,36 @@ This will start:
 - **Backend server** on `http://localhost:3001`
 - **Frontend client** on `http://localhost:5173`
 
+### Docker Deployment
+
+Run the entire stack with Docker using the provided `docker-compose.yml` file:
+
+```bash
+# Build images and start the services
+docker compose up --build
+
+# Stop the containers when you're done
+docker compose down
+```
+
+Once the containers are running:
+
+- The **frontend** is available at `http://localhost:4173`
+- The **backend API** is exposed at `http://localhost:3001`
+
+Uploaded files and the SQLite database are persisted in Docker volumes (`server-uploads`, `server-data`).
+
+#### Environment Variables
+
+You can customize the containers with environment variables in `docker-compose.yml`:
+
+- `VITE_API_BASE_URL` – Base URL used by the frontend to reach the backend API.
+- `PORT` – Port that the backend listens on inside the container (default `3001`).
+- `CORS_ORIGINS` – Comma-separated list of allowed origins for the backend API.
+- `PUBLIC_IMAGE_BASE_URL` – Base URL used when returning uploaded image URLs.
+
+Update the values or use an `.env` file referenced by Compose to tailor the deployment for your environment.
+
 ### Manual Setup (Alternative)
 
 #### 1. Install Dependencies
