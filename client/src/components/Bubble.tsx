@@ -6,7 +6,7 @@ import { useTasks } from '../store/useTasks';
 
 // Memoize the component to prevent unnecessary re-renders
 const Bubble = memo(function Bubble({ task }: { task: Task }) {
-  const { updateTask, completeAndActivateNext } = useTasks();
+  const { updateTask, completeAndActivateNext, deleteTask } = useTasks();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -44,12 +44,20 @@ const Bubble = memo(function Bubble({ task }: { task: Task }) {
     }
   }, [task.id, task.remainingSeconds, updateTask]);
 
+  const handleDeleteTask = useCallback(async () => {
+    try {
+      await deleteTask(task.id);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  }, [deleteTask, task.id]);
+
   return (
     <div className={`flex items-center gap-3 p-3 backdrop-blur-sm bg-gradient-to-r ${getStatusColor(task.status)} border rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300`}>
       <TaskIcon imageUrl={task.imageDataUrl} size="medium" />
       <div className="flex-1">
         <div className="font-semibold text-white text-lg drop-shadow-sm">{task.title}</div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="text-white/80 text-sm">{task.status} • {task.estMinutes} minutes</div>
           {task.status === 'Active' && (
             <Timer
@@ -59,6 +67,14 @@ const Bubble = memo(function Bubble({ task }: { task: Task }) {
               onTimeUp={handleTimerComplete}
               onTick={handleTimerTick}
             />
+          )}
+          {task.status === 'Completed' && (
+            <button
+              onClick={handleDeleteTask}
+              className="px-3 py-1 text-xs font-medium text-white bg-red-500/80 hover:bg-red-500 rounded-lg border border-red-400/60 transition-colors"
+            >
+              Delete
+            </button>
           )}
         </div>
       </div>
