@@ -40,6 +40,15 @@ const corsOriginHandler = (origin, callback) => {
 const uploadsDir = path.join(__dirname, 'uploads');
 const dataDir = path.join(__dirname, 'data');
 const dbPath = path.join(dataDir, 'tasks.sqlite');
+const clientDistDir = path.join(__dirname, 'client-dist');
+
+let clientAssetsAvailable = false;
+try {
+  await fs.access(path.join(clientDistDir, 'index.html'));
+  clientAssetsAvailable = true;
+} catch (error) {
+  console.warn('⚠️  Client build not found. API routes will still work, but static assets are unavailable.');
+}
 
 await fs.mkdir(dataDir, { recursive: true });
 await fs.mkdir(uploadsDir, { recursive: true });
@@ -53,6 +62,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' })); // For base64 images
 app.use(express.static(uploadsDir)); // Serve uploaded files
+if (clientAssetsAvailable) {
+  app.use(express.static(clientDistDir));
+}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -510,11 +522,22 @@ app.use((error, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
+// Final handler for unmatched routes
+app.use((req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      success: false,
+      error: 'Endpoint not found'
+    });
+  }
+
+  if (clientAssetsAvailable) {
+    return res.sendFile(path.join(clientDistDir, 'index.html'));
+  }
+
+  return res.status(404).json({
     success: false,
-    error: 'Endpoint not found'
+    error: 'Resource not found'
   });
 });
 

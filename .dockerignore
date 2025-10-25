@@ -1,0 +1,25 @@
+# Exclude local node modules and build artifacts
+node_modules
+client/node_modules
+server/node_modules
+
+# Logs and runtime files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor and OS files
+.DS_Store
+*.swp
+*.swo
+
+# Local environment overrides
+.env.local
+.env.*
+
+# Test coverage and build outputs
+coverage
+client/dist
+server/uploads
+server/data
